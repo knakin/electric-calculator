@@ -5,6 +5,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="Electric Calc">
+    <meta name="application-name" content="Electric Calculator">
+    <meta name="theme-color" content="#1a1a1a">
+    
+    <!-- Icons -->
+    <link rel="icon" type="image/png" href="icon.png">
+    <link rel="apple-touch-icon" href="icon.png">
+    <link rel="apple-touch-icon-precomposed" href="icon.png">
+    
     <title>Electric Calculator</title>
     <style>
         @font-face {
@@ -627,7 +636,7 @@
             border-radius: 12px;
             padding: 25px;
             width: 90%;
-            max-width: 300px;
+            max-width: 380px;
             box-shadow: 0 15px 50px rgba(0,0,0,0.6);
             border: 1px solid #111;
         }
@@ -664,6 +673,10 @@
             color: #e0e0e0;
         }
 
+        .setting-row {
+            margin-bottom: 20px;
+        }
+
         .cosf-slider {
             -webkit-appearance: none;
             appearance: none;
@@ -683,6 +696,7 @@
             box-shadow: 0 2px 5px rgba(0,0,0,0.5);
             border: 2px solid #0a0a0a;
             cursor: pointer;
+            margin-top: -10px;
         }
 
         .cosf-slider::-webkit-slider-runnable-track {
@@ -720,9 +734,44 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-top: 15px;
             padding-top: 15px;
+            margin-top: 15px;
             border-top: 1px solid #444;
+        }
+
+        .metric-toggle .setting-label {
+            flex: 1;
+        }
+
+        /* Переключатели в модальном окне */
+        .modal-content .ios-toggle {
+            width: 70px;
+            height: 30px;
+            border-radius: 15px;
+            flex-shrink: 0;
+        }
+
+        .modal-content .ios-toggle::after {
+            width: 26px;
+            height: 26px;
+            top: 0px;
+            right: 2px;
+        }
+
+        .modal-content .ios-toggle.on::after {
+            transform: translateX(-37px);
+        }
+
+        .modal-content .ios-toggle .toggle-text {
+            font-size: 9px;
+        }
+
+        .modal-content .ios-toggle .toggle-text.left {
+            left: 5px;
+        }
+
+        .modal-content .ios-toggle .toggle-text.right {
+            right: 5px;
         }
     </style>
 </head>
@@ -875,18 +924,18 @@
             <div class="setting-row">
                 <div class="setting-header">
                     <span class="setting-label">Пресет 380В (3 фазы)</span>
-                    <div class="ios-toggle" id="preset380Switch" onclick="togglePreset380()" style="width: 60px; height: 24px;">
-                        <span class="toggle-text left" style="font-size: 10px;">ВКЛ</span>
-                        <span class="toggle-text right" style="font-size: 10px;">ВЫКЛ</span>
+                    <div class="ios-toggle" id="preset380Switch" onclick="togglePreset380()">
+                        <span class="toggle-text left">ВКЛ</span>
+                        <span class="toggle-text right">ВЫКЛ</span>
                     </div>
                 </div>
             </div>
 
-            <div class="metric-toggle">
+            <div class="setting-row metric-toggle">
                 <span class="setting-label">Единицы</span>
-                <div class="ios-toggle" id="metricSwitch" onclick="toggleMetric()" style="width: 60px; height: 24px;">
-                    <span class="toggle-text left" style="font-size: 10px;">мм²</span>
-                    <span class="toggle-text right" style="font-size: 10px;">in²</span>
+                <div class="ios-toggle" id="metricSwitch" onclick="toggleMetric()">
+                    <span class="toggle-text left">мм²</span>
+                    <span class="toggle-text right">in²</span>
                 </div>
             </div>
 
@@ -1155,19 +1204,21 @@
             const i = setSlider(parseFloat(document.getElementById('fieldI').value) || 0);
             let s, sRek;
             const isCu = document.getElementById('materialSwitch').classList.contains('on');
-            
-            // Calculate minimum cross-section
+
+            // Calculate minimum cross-section (по формуле)
             if (isCu) {
                 s = 0.01 * Math.pow(i, 1.64);
             } else {
                 s = 0.0165591 * Math.pow(i, 1.575);
             }
             if (s < 0.5) s = 0.5;
-            
-            // Calculate recommended cross-section
+
+            // Calculate recommended cross-section (стандартные значения)
+            // Логика как в оригинале, но с началом от 0.5 мм²
             if (isCu) {
-                // Copper
-                if (i < 2) sRek = 0.5;
+                // Медь
+                if (i <= 0) sRek = 0.5;
+                else if (i < 2) sRek = 0.5;
                 else if (i < 3) sRek = 0.75;
                 else if (i < 6) sRek = 1;
                 else if (i < 12) sRek = 1.5;
@@ -1189,30 +1240,31 @@
                 else if (i < 640) sRek = 400;
                 else sRek = 0.01 * Math.pow(i * 1.15, 1.64);
             } else {
-                // Aluminum
-                if (i < 14) sRek = 2;
-                else if (i < 16) sRek = 2.5;
-                else if (i < 18) sRek = 3;
-                else if (i < 21) sRek = 4;
-                else if (i < 24) sRek = 5;
-                else if (i < 26) sRek = 6;
-                else if (i < 32) sRek = 8;
-                else if (i < 38) sRek = 10;
-                else if (i < 55) sRek = 16;
-                else if (i < 65) sRek = 25;
-                else if (i < 75) sRek = 35;
-                else if (i < 105) sRek = 50;
-                else if (i < 135) sRek = 70;
-                else if (i < 165) sRek = 95;
-                else if (i < 190) sRek = 120;
-                else if (i < 250) sRek = 150;
-                else if (i < 300) sRek = 185;
-                else if (i < 370) sRek = 240;
-                else if (i < 450) sRek = 300;
-                else if (i < 535) sRek = 400;
+                // Алюминий
+                if (i <= 0) sRek = 0.5;
+                else if (i < 2) sRek = 0.5;
+                else if (i < 3) sRek = 0.75;
+                else if (i < 6) sRek = 1;
+                else if (i < 12) sRek = 1.5;
+                else if (i < 23) sRek = 2.5;
+                else if (i < 30) sRek = 4;
+                else if (i < 40) sRek = 6;
+                else if (i < 60) sRek = 10;
+                else if (i < 90) sRek = 16;
+                else if (i < 110) sRek = 25;
+                else if (i < 140) sRek = 35;
+                else if (i < 180) sRek = 50;
+                else if (i < 200) sRek = 70;
+                else if (i < 260) sRek = 95;
+                else if (i < 300) sRek = 120;
+                else if (i < 350) sRek = 150;
+                else if (i < 390) sRek = 185;
+                else if (i < 470) sRek = 240;
+                else if (i < 530) sRek = 300;
+                else if (i < 640) sRek = 400;
                 else sRek = 0.0165591 * Math.pow(i * 1.25, 1.575);
             }
-            
+
             // Display values
             if (metr === 1) {
                 document.getElementById('minSize').textContent = s.toFixed(1) + ' mm²';
